@@ -42,7 +42,8 @@ def main2():
 from direct.showbase.ShowBase import ShowBase
 from direct.actor.Actor import Actor
 from direct.task import Task
-from panda3d.core import loadPrcFile
+from panda3d.core import *
+from direct.interval.IntervalGlobal import Sequence
 from math import sin, cos, pi
 from random import random
 
@@ -64,7 +65,29 @@ def main():
 
             self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
             self.taskMgr.add(self.spinPandaTask, "SpinPandaTask")
+            self.taskMgr.add(self.processLights, "ProcessLights")
             self.pandaActor = Actor('usr/share/panda3d/models/panda-model.egg.pz', {'walk': 'usr/share/panda3d/models/panda-walk4.egg.pz'})
+
+            # pandaPosInterval1 = self.pandaActor.posInterval(13,
+            #                                                 Point3(0, -10, 0),
+            #                                                 startPos=Point3(0, 10, 0))
+            # pandaPosInterval2 = self.pandaActor.posInterval(13,
+            #                                                 Point3(0, 10, 0),
+            #                                                 startPos=Point3(0, -10, 0))
+            # pandaHprInterval1 = self.pandaActor.hprInterval(3,
+            #                                                 Point3(180, 0, 0),
+            #                                                 startHpr=Point3(0, 0, 0))
+            # pandaHprInterval2 = self.pandaActor.hprInterval(3,
+            #                                                 Point3(0, 0, 0),
+            #                                                 startHpr=Point3(180, 0, 0))
+            #
+            # # Create and play the sequence that coordinates the intervals.
+            # self.pandaPace = Sequence(pandaPosInterval1,
+            #                           pandaHprInterval1,
+            #                           pandaPosInterval2,
+            #                           pandaHprInterval2,
+            #                           name="pandaPace")
+            # self.pandaPace.loop()
 
             self.pandaActor.reparentTo(self.render)
             self.pandaActor.setScale(0.005, 0.005, 0.005)
@@ -72,11 +95,28 @@ def main():
 
             self.walkAngle = 0
 
+            # self.dlight = DirectionalLight('dlight 1')
+            # self.dlnp = self.render.attachNewNode(self.dlight)
+            #
+            # self.dlnp.setPos(0, 0, 5)
+            # self.dlnp.lookAt(self.pandaActor)
+
+            self.plight = PointLight('plight 1')
+            self.plnp = self.render.attachNewNode(self.plight)
+            self.plnp.setColor(VBase4(1, 0.2, 0.2, 1))
+            self.plnp.setPos(0, 0, 5)
+            self.plight.setShadowCaster(True, 512, 512)
+            # self.plight.setAttenuation((0, 0, 1))
+
+            self.render.setShaderAuto()
+            self.render.setLight(self.plnp)
+
         def spinCameraTask(self, task):
             angleDegrees = task.time * 6.0
             angleRadians = angleDegrees * (pi / 180.0)
-            self.camera.setPos(20 * sin(angleRadians), -20.0 * cos(angleRadians), 3)
+            self.camera.setPos(25 * sin(angleRadians), -25.0 * cos(angleRadians), (sin(task.time / 2) + 1) / 2 * 5 + 15)
             self.camera.setHpr(angleDegrees, 0, 0)
+            self.camera.lookAt(self.pandaActor)
             return Task.cont
 
         def spinPandaTask(self, task):
@@ -99,13 +139,20 @@ def main():
 
             x = sin(task.time / DIV) * 5
             y = cos(task.time / DIV) * 5
-            print task.time
             self.pandaActor.setPos(x, y, 0)
             self.pandaActor.setHpr(-task.time / 2 / pi * 360 / DIV + 90, 0, 0)
 
             # print task.time
             # self.pandaActor.setHpr(task.time * 100, 0, 0)
             # self.pandaActor.setPos(random() * 2 - 1, random() * 2 - 1, random() * 2 - 1)
+            return Task.cont
+
+        def processLights(self, task):
+            angleDegrees = -task.time * 360.0
+            angleRadians = angleDegrees * (pi / 180.0)
+            self.plnp.setPos(5 * sin(angleRadians), -5 * cos(angleRadians), 10)
+            self.plnp.setHpr(angleDegrees, 0, 0)
+            self.plnp.lookAt(self.pandaActor)
             return Task.cont
 
     app = Game()
