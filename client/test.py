@@ -1,16 +1,20 @@
 #!/usr/bin/env python2
 
-from network import Channel
-import socket
-import time
+# from network import Channel
+# import socket
+# import time
 # from ctypes import cdll
-# import platform
-import sys
-import os
+import platform
+# import sys
+# import os
 
 # sys.path.append(os.path.abspath())
 
-# def init_steam():
+from game.engine import Engine
+engine = Engine()
+engine.start()
+
+def init_steam():
 #     arch, _ = platform.architecture()
 #     if arch == '64bit':
 #         i9c = cdll.LoadLibrary('./i9c_64.so')
@@ -21,12 +25,21 @@ import os
 #     i9c.api_request_ticket()
 #     #time.sleep(3)
 #     #i9c.api_get_ticket()
-# #    steam_user = libsteam_api.SteamUser()
+    libsteam_api = cdll.LoadLibrary('old/libsteam_api.so')
+    libsteam_api.SteamAPI_Init()
+#     steam_
+    # steam_user = libsteam_api.SteamUser()
 # #    libsteam_api.SteamAPI_ISteamUser_GetAuthSessionTicket()
 
 
+#init_steam()
+
+#import time
+#time.sleep(10)
+
+
 def main2():
-    # init_steam()
+    init_steam()
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(('127.0.0.1', 8881))
@@ -40,9 +53,11 @@ def main2():
 
 
 from direct.showbase.ShowBase import ShowBase
+from direct.showbase.DirectObject import DirectObject
 from direct.actor.Actor import Actor
 from direct.task import Task
 from panda3d.core import *
+from pandac.PandaModules import *
 from direct.interval.IntervalGlobal import Sequence
 from math import sin, cos, pi
 from random import random
@@ -51,22 +66,98 @@ loadPrcFile("config.prc")
 
 
 def main():
-    class Game(ShowBase):
+    class CollisionMixin:
+        def __init__(self):
+            self.accept('mouse1', self.printMe)
+
+            self.picker = CollisionTraverser()
+
+            self.queue = CollisionHandlerQueue()
+
+            self.pickerNode = CollisionNode('mouseRay')
+            self.pickerNP = self.camera.attachNewNode(self.pickerNode)
+
+            self.pickerNode.setFromCollideMask(GeomNode.getDefaultCollideMask())
+
+            self.pickerRay = CollisionRay()
+
+            self.pickerNode.addSolid(self.pickerRay)
+            self.pickerNode.setFromCollideMask(BitMask32.bit(1))
+
+            self.picker.addCollider(self.pickerNP, self.queue)
+
+        # this function is meant to flag an object as being somthing we can pick
+        def makePickable(self, newObj):
+            newObj.setCollideMask(BitMask32.bit(1))
+            newObj.setTag('pickable', 'true')
+
+        # this function finds the closest object to the camera that has been hit by our ray
+        def getObjectHit(self, mpos):  # mpos is the position of the mouse on the screen
+            self.pickedObj = None
+
+            # self.camera.ls()
+
+            self.pickedObj = None  # be sure to reset this
+            self.pickerRay.setFromLens(self.camNode, mpos.getX(), mpos.getY())
+            self.picker.traverse(self.render)
+            if self.queue.getNumEntries() > 0:
+                self.queue.sortEntries()
+                self.pickedObj = self.queue.getEntry(0).getIntoNodePath()
+
+                parent = self.pickedObj.getParent()
+                self.pickedObj = None
+
+                while parent != self.render:
+                    if parent.getTag('pickable') == 'true':
+                        self.pickedObj = parent
+                        return parent
+                    else:
+                        parent = parent.getParent()
+            return None
+
+        def getPickedObj(self):
+            return self.pickedObj
+
+        def printMe(self):
+            self.getObjectHit(base.mouseWatcherNode.getMouse())
+            print self.pickedObj
+
+    class Game(ShowBase, CollisionMixin):
         def __init__(self):
             ShowBase.__init__(self)
+            CollisionMixin.__init__(self)
 
-            self.scene = self.loader.loadModel("usr/share/panda3d/models/environment.egg.pz")
-            self.scene.reparentTo(self.render)
+            base.disableMouse()
 
-            self.scene.setScale(0.25, 0.25, 0.25)
-            self.scene.setPos(-8, 42, 0)
+            self.accept('escape', sys.exit)
+
+            # self.picker = Picker(self)
+
+            # self.scene = self.loader.loadModel("usr/share/panda3d/models/environment.egg.pz")
+            # self.scene.reparentTo(self.render)
+            #
+            # self.scene.setScale(0.25, 0.25, 0.25)
+            # self.scene.setPos(-8, 42, 0)
+
+            # self.picker.makePickable(self.scene)
 
             # Load animated model
 
             self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
-            self.taskMgr.add(self.spinPandaTask, "SpinPandaTask")
-            self.taskMgr.add(self.processLights, "ProcessLights")
+            # self.taskMgr.add(self.spinPandaTask, "SpinPandaTask")
+            # self.taskMgr.add(self.processLights, "ProcessLights")
+            self.taskMgr.add(self.preProcess, "PreProcess")
             self.pandaActor = Actor('usr/share/panda3d/models/panda-model.egg.pz', {'walk': 'usr/share/panda3d/models/panda-walk4.egg.pz'})
+            self.pandaActor.setCollideMask(BitMask32(1))
+            self.makePickable(self.pandaActor)
+
+            self.box = self.loader.loadModel('usr/share/panda3d/models/box.egg.pz')
+            self.box.reparentTo(self.render)
+            self.box.setScale(2, 2, 2)
+            self.box.setPos(0, 10, 0)
+            self.makePickable(self.box)
+
+            print self.camera
 
             # pandaPosInterval1 = self.pandaActor.posInterval(13,
             #                                                 Point3(0, -10, 0),
@@ -92,6 +183,7 @@ def main():
             self.pandaActor.reparentTo(self.render)
             self.pandaActor.setScale(0.005, 0.005, 0.005)
             self.pandaActor.loop('walk')
+            self.pandaActor.setPos(-3, 10, 0)
 
             self.walkAngle = 0
 
@@ -111,12 +203,22 @@ def main():
             self.render.setShaderAuto()
             self.render.setLight(self.plnp)
 
+            # self.camera.setPos(0, -10, 0)
+
+        def preProcess(self, task):
+            # print self.camera
+            # self.picker.update()
+            return Task.cont
+
         def spinCameraTask(self, task):
-            angleDegrees = task.time * 6.0
-            angleRadians = angleDegrees * (pi / 180.0)
-            self.camera.setPos(25 * sin(angleRadians), -25.0 * cos(angleRadians), (sin(task.time / 2) + 1) / 2 * 5 + 15)
-            self.camera.setHpr(angleDegrees, 0, 0)
-            self.camera.lookAt(self.pandaActor)
+            # self.camera.setPos(20, 20, 20)
+            self.camera.setPos(0, -task.time, 0)
+            # self.camera.lookAt(self.pandaActor)
+            # angleDegrees = task.time * 6.0
+            # angleRadians = angleDegrees * (pi / 180.0)
+            # self.camera.setPos(25 * sin(angleRadians), -25.0 * cos(angleRadians), (sin(task.time / 2) + 1) / 2 * 5 + 15)
+            # self.camera.setHpr(angleDegrees, 0, 0)
+            # self.camera.lookAt(self.pandaActor)
             return Task.cont
 
         def spinPandaTask(self, task):
