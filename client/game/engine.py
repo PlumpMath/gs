@@ -1,7 +1,7 @@
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import loadPrcFile, Vec4
-from scenes import MainScene
+from scenes import MenuScene
 from direct.showbase.Transitions import Transitions
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, LerpFunc, Parallel
 from direct.filter.CommonFilters import CommonFilters
@@ -42,7 +42,7 @@ class Engine(ShowBase):
 
         self.scene = None
 
-        self.set_scene(MainScene)
+        self.set_scene(MenuScene)
 
     def set_scene(self, scene_class):
         # self.transitions.fadeOut(0.2)
@@ -50,6 +50,7 @@ class Engine(ShowBase):
 
         if self.scene:
             args.append(Parallel(Func(self.fade_out), LerpFunc(self.blur_out, duration=0.2)))
+            args.append(Wait(0.2))
 
         args.append(Func(self._set_scene, scene_class))
         args.append(Parallel(Func(self.fade_in), LerpFunc(self.blur_in, duration=0.4)))
