@@ -182,6 +182,12 @@ class SecondScene(PickableScene):
         self.box.reparentTo(self.engine.render)
         self.makePickable(self.box)
 
+#        self.plant = self.engine.loader.loadModel('res/models/plant.egg.gz')
+#        self.plant.reparentTo(self.engine.render)
+
+#        self.plant.setPos(1, 1, 0)
+#        self.plant.setScale(0.1, 0.1, 0.1)
+
         self.engine.accept('space', self.next_scene)
 
     def next_scene(self):
@@ -195,4 +201,5 @@ class SecondScene(PickableScene):
     def destroy(self):
         self.engine.ignore('space')
         self.box.remove_node()
+#        self.plant.remove_node()
         super(SecondScene, self).destroy()

@@ -5,11 +5,7 @@
     <bookmark url="file://$PROJECT_DIR$/client/test.py" line="237" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5ffbc45-8d1a-476b-80f6-235c214c9b05" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/config.prc" afterPath="$PROJECT_DIR$/client/config.prc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/client/test.py" afterPath="$PROJECT_DIR$/client/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="d5ffbc45-8d1a-476b-80f6-235c214c9b05" name="Default" comment="" />
     <ignored path="gs.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
