@@ -1,4 +1,4 @@
-from network import Channel, ChannelError
+from common.network import Channel, ChannelError
 from protocol.processors import AuthProcessor
 
 

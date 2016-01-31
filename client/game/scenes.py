@@ -20,9 +20,43 @@ class Scene(object):
         #     child.remove_node()
 
 
-class PickableScene(Scene):
-    def __init__(self, engine):
-        super(PickableScene, self).__init__(engine)
+class NotifiableScene:
+    last_id = 0
+
+    class Notification(object):
+        def __init__(self, scene, font, message):
+            NotifiableScene.last_id += 1
+            self.id = NotifiableScene.last_id
+            self.node = TextNode('Notification {}'.format(self.id))
+            self.node.setText(message)
+            self.node.setFont(font)
+            self.nodePath = None
+            self.nodePath = scene.engine.aspect2d.attachNewNode(self.node)
+            # self.nodePath.setPos(-1, 0, -1)
+            self.nodePath.setPos(-scene.engine.getAspectRatio(), 0, 0)
+            self.nodePath.setScale(0.04)
+
+        def destroy(self):
+            if self.nodePath:
+                self.nodePath.remove_node()
+
+    def __init__(self):
+        # super(NotifiableScene, self).__init__(engine)
+        self.notifications = []
+        self.font = self.engine.loader.loadFont('res/fonts/Roboto-Regular-webfont.ttf')
+
+    def notify(self, message):
+        notification = NotifiableScene.Notification(self, self.font, message)
+        self.notifications.append(notification)
+
+    def destroy(self):
+        for notification in self.notifications:
+            notification.destroy()
+
+
+class PickableScene:
+    def __init__(self):
+        # super(PickableScene, self).__init__(engine)
 
         self.pickedObj = None
 
@@ -73,16 +107,16 @@ class PickableScene(Scene):
     def destroy(self):
         self.engine.ignore('mouse1')
         self.pickerNP.remove_node()
-        super(PickableScene, self).destroy()
+        # super(PickableScene, self).destroy()
 
     def makePickable(self, newObj):
         newObj.setCollideMask(BitMask32.bit(1))
         newObj.setTag('pickable', 'true')
 
 
-class ClickableGroundScene(Scene):
-    def __init__(self, engine):
-        super(ClickableGroundScene, self).__init__(engine)
+class ClickableGroundScene:
+    def __init__(self):
+        # super(ClickableGroundScene, self).__init__(engine)
 
         # self.camera.setPos(0, 60, 25)
         # self.camera.lookAt(0, 0, 0)
@@ -98,9 +132,9 @@ class ClickableGroundScene(Scene):
         self.engine.taskMgr.add(self.get_mouse_pos, "GetMousePos")
 
     def destroy(self):
-        self.plane.remove_node()
+        # self.plane.remove_node()
         self.engine.taskMgr.remove("GetMousePos")
-        super(ClickableGroundScene, self).destroy()
+        # super(ClickableGroundScene, self).destroy()
 
     def get_ground_intersection(self):
         return self.intersection
@@ -123,7 +157,8 @@ class ClickableGroundScene(Scene):
 
 class MenuScene(Scene):
     def __init__(self, engine):
-        super(MenuScene, self).__init__(engine)
+        # super(MenuScene, self).__init__(engine)
+        Scene.__init__(self, engine)
 
         self.box_pivot = self.engine.render.attachNewNode('box-pivot')
 
@@ -174,12 +209,15 @@ class MenuScene(Scene):
         self.frame.remove_node()
         self.buttons.remove_node()
         self.engine.taskMgr.remove('rotate_box_task')
+        Scene.destroy(self)
 
 
-class MainScene(ClickableGroundScene):
+class MainScene(Scene, ClickableGroundScene, NotifiableScene):
     def __init__(self, engine):
         # PickableScene.__init__(self, engine)
-        ClickableGroundScene.__init__(self, engine)
+        Scene.__init__(self, engine)
+        ClickableGroundScene.__init__(self)
+        NotifiableScene.__init__(self)
 
         cm = CardMaker('ground')
         pavement = self.engine.loader.loadTexture('res/textures/pavement.jpg')
@@ -217,6 +255,16 @@ class MainScene(ClickableGroundScene):
         self.engine.accept('space', self.next_scene)
 
         self.engine.taskMgr.add(self.follow_panda_task, 'follow_panda_task')
+        self.engine.taskMgr.add(self.notification_task, 'notification_task')
+
+        self.last_show = 0
+
+    def notification_task(self, task):
+        if self.last_show + 1 < task.time:
+            self.notify('Test notification')
+            self.last_show = task.time
+            print 'SHOW'
+        return Task.cont
 
     def follow_panda_task(self, task):
         self.engine.camera.lookAt(self.panda)
@@ -253,16 +301,21 @@ class MainScene(ClickableGroundScene):
 
     def destroy(self):
         self.engine.taskMgr.remove('follow_panda_task')
+        self.engine.taskMgr.remove('notification_task')
         self.engine.ignore('mouse1')
         self.engine.ignore('space')
         self.ground.remove_node()
         self.panda.remove_node()
-        super(ClickableGroundScene, self).destroy()
+        # super(ClickableGroundScene, self).destroy()
+        ClickableGroundScene.destroy(self)
+        NotifiableScene.destroy(self)
+        Scene.destroy(self)
 
 
-class SecondScene(PickableScene):
+class SecondScene(Scene, PickableScene):
     def __init__(self, engine):
-        super(SecondScene, self).__init__(engine)
+        Scene.__init__(self, engine)
+        PickableScene.__init__(self)
 
         self.box = self.engine.loader.loadModel('usr/share/panda3d/models/box.egg.pz')
         self.box.reparentTo(self.engine.render)
@@ -288,4 +341,6 @@ class SecondScene(PickableScene):
         self.engine.ignore('space')
         self.box.remove_node()
 #        self.plant.remove_node()
-        super(SecondScene, self).destroy()
+#         super(SecondScene, self).destroy()
+        PickableScene.destroy(self)
+        Scene.destroy(self)

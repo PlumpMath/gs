@@ -1,3 +1,4 @@
+import socket
 import struct
 import msgpack
 
@@ -7,10 +8,14 @@ class ChannelError(Exception):
 
 
 class Channel(object):
-    def __init__(self, conn, info):
+    def __init__(self, conn=None, info=None):
         self.conn = conn
         self.info = info
         self.data = []
+
+    def connect(self):
+        self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn.connect(('127.0.0.1', 8881))
 
     def send_packet(self, data):
         print ' >', data
