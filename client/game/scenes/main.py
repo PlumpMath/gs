@@ -33,6 +33,16 @@ class MainScene(ClickableGroundScene, NotifiableScene):
 
         self.panda_walk = None
 
+        # self.shader = Shader.load(Shader.SL_GLSL, vertex="./res/shaders/switch.vs", fragment="./res/shaders/switch.fs")
+        self.shader = Shader.load(Shader.SL_GLSL, vertex="./res/shaders/test.vs", fragment="./res/shaders/test.fs")
+        # self.shader = Shader.load(Shader.SL_GLSL, vertex="./res/shaders/glow.vs", fragment="./res/shaders/glow.fs")
+        # self.shader = Shader.load("./res/shaders/switch.sha", Shader.SL_Cg)
+        self.panda.set_shader_input('c', 1.0)
+        self.panda.set_shader_input('p', 0.5)
+        self.panda.set_shader_input('glowColor', (1.0, 0.5, 0.5))
+        self.panda.set_shader_input('viewVector', self.engine.camera.getPos())
+        self.panda.set_shader(self.shader)
+
         # self.box = self.engine.loader.loadModel('usr/share/panda3d/models/box.egg.pz')
         # self.box.reparentTo(self.engine.render)
         # self.makePickable(self.box)
