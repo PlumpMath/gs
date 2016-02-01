@@ -1,4 +1,5 @@
 import json
+from .database import get_db
 
 
 class AbstractProcessor(object):
@@ -23,4 +24,13 @@ class AuthProcessor(AbstractProcessor):
         self.state = AuthProcessor.State.UNAUTHORIZED
 
     def process_packet(self, packet):
-        self.client.channel.send_packet(['success', 'bar', {'x': 'y'}])
+        try:
+            action, login, password = packet
+        except:
+            return
+
+        if action == 'auth':
+            if login == 'anderson' and password == '12345678':
+                self.client.channel.send_packet(['auth:result', 1])
+            else:
+                self.client.channel.send_packet(['auth:result', 0])

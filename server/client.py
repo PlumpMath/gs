@@ -1,5 +1,5 @@
 from common.network import Channel, ChannelError
-from protocol.processors import AuthProcessor
+from core.processors import AuthProcessor
 
 
 class Client(object):
@@ -12,6 +12,8 @@ class Client(object):
 
         self.channel = Channel(conn, info)
         self.processor = AuthProcessor(self)
+
+        self.data = {}
 
         Client.add_client(self)
 

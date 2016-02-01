@@ -1,3 +1,4 @@
+import select
 import socket
 import struct
 import msgpack
@@ -21,6 +22,10 @@ class Channel(object):
         print ' >', data
         stream = msgpack.packb(data)
         self.conn.send(struct.pack('>H', len(stream) + 2) + stream)
+
+    def can_read(self):
+        iready, oready, eready = select.select([self.conn], [], [], 0)
+        return self.conn in iready
 
     def read_packets(self):
         data = list(self.conn.recv(1024))

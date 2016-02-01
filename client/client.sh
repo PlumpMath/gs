@@ -24,7 +24,7 @@ DIR=`dirname "${SELF}"`
 USR="${DIR}/usr"
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${USR}/lib/x86_64-linux-gnu/panda3d/
-export PYTHONPATH=${PYTHONPATH}:${USR}/lib/python2.7/dist-packages/:${USR}/share/panda3d:${USR}/lib/x86_64-linux-gnu/panda3d
+export PYTHONPATH=${PYTHONPATH}:${USR}/lib/python2.7/dist-packages/:${USR}/lib/python2.7/site-packages/:${USR}/share/panda3d:${USR}/lib/x86_64-linux-gnu/panda3d
 echo -e "${USR}/share/panda3d\n${USR}/lib/x86_64-linux-gnu/panda3d" > ${USR}/lib/python2.7/dist-packages/panda3d.pth
 
 echo ${LD_LIBRARY_PATH}
